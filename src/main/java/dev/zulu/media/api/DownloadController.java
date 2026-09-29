@@ -39,12 +39,12 @@ public final class DownloadController {
     }
 
     @GetMapping("/{jobId}")
-    public DownloadResponse show(@PathVariable UUID jobId) {
+    public DownloadResponse show(@PathVariable("jobId") UUID jobId) {
         return DownloadResponse.from(downloadService.get(jobId));
     }
 
     @GetMapping("/{jobId}/file")
-    public ResponseEntity<FileSystemResource> file(@PathVariable UUID jobId) {
+    public ResponseEntity<FileSystemResource> file(@PathVariable("jobId") UUID jobId) {
         StoredMedia media = downloadService.getFile(jobId);
         MediaType contentType = media.details().format().equalsIgnoreCase("mp3")
             ? MediaType.parseMediaType("audio/mpeg")
@@ -62,7 +62,7 @@ public final class DownloadController {
     }
 
     @DeleteMapping("/{jobId}")
-    public ResponseEntity<Void> delete(@PathVariable UUID jobId) {
+    public ResponseEntity<Void> delete(@PathVariable("jobId") UUID jobId) {
         downloadService.delete(jobId);
         return ResponseEntity.noContent().build();
     }
