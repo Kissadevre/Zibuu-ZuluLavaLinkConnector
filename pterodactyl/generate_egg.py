@@ -90,8 +90,6 @@ variables = [
     variable("yt-cipher Repository", "Source repository installed by the Egg.", "YT_CIPHER_GIT_REPOSITORY", "https://github.com/kikkia/yt-cipher.git", "required|string|url", visible=False, editable=False),
     variable("yt-cipher Git Ref", "Branch, tag, or commit installed by the Egg.", "YT_CIPHER_GIT_REF", "master", "required|string|max:100", visible=False, editable=False),
     variable("yt-dlp/ejs Commit", "yt-dlp/ejs commit patched by yt-cipher.", "EJS_COMMIT", "cd4e87f52e87ab6d8b318fd3a817adda6fafa8dc", "required|string|regex:/^[a-f0-9]{40}$/", visible=False, editable=False),
-    variable("Zulu Media Repository", "Repository built during installation.", "ZULU_MEDIA_GIT_REPOSITORY", "https://github.com/Kissadevre/Zibuu-ZuluLavaLinkConnector.git", "required|string|url", visible=False, editable=False),
-    variable("Zulu Media Git Ref", "Branch, tag, or commit of the Zulu Media plugin.", "ZULU_MEDIA_GIT_REF", "development", "required|string|max:100"),
     variable("GitHub User", "Optional GitHub username for private repositories or API rate limits.", "GITHUB_USER", "", "nullable|string", visible=False, editable=False),
     variable("GitHub OAuth Token", "Optional GitHub token paired with GitHub User.", "GITHUB_OAUTH_TOKEN", "", "nullable|string", visible=False, editable=False),
 ]
@@ -102,7 +100,7 @@ egg = {
     "exported_at": "2026-09-29T00:00:00-06:00",
     "name": "Zulu Lavalink Stack",
     "author": "admin@zibuu.com",
-    "description": "Runs Lavalink, youtube-source, yt-cipher, and Zulu Media in one Pterodactyl server. Linux AMD64 only; portable Deno, yt-dlp, FFmpeg, and FFprobe binaries are stored in the persistent server volume.",
+    "description": "Runs Lavalink, youtube-source, yt-cipher, and a manually uploaded Zulu Media plugin in one Pterodactyl server. Linux AMD64 only; portable Deno, yt-dlp, FFmpeg, and FFprobe binaries are stored in the persistent server volume.",
     "features": None,
     "docker_images": {"Java 21": "ghcr.io/ptero-eggs/yolks:java_21"},
     "file_denylist": [],

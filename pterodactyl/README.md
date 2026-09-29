@@ -28,12 +28,19 @@ Portable runtime dependencies persist in the server volume instead of relying on
 3. Set a strong, unique `LAVALINK_PASSWORD`.
 4. Set a strong, unique `ZULU_MEDIA_API_TOKEN`; do not reuse the Lavalink password.
 5. Optionally set `YT_CIPHER_API_TOKEN`.
-6. Ensure the main allocation port is reachable by the Zulu application. Port `8001` is loopback-only and does not need another allocation.
-7. Run the Pterodactyl reinstall operation, then start the server.
+6. Run the Pterodactyl install or reinstall operation.
+7. Upload the plugin JAR through the file manager or SFTP using this exact path and name:
 
-The plugin is currently built from `ZULU_MEDIA_GIT_REF` during installation. The default is the `development` branch. For a production deployment, set this variable to a release tag or immutable commit.
+   ```text
+   /home/container/plugins/zulu-media-plugin.jar
+   ```
 
-If the GitHub repository is private, configure the hidden `GITHUB_USER` and `GITHUB_OAUTH_TOKEN` Egg variables before installation.
+8. Ensure the main allocation port is reachable by the Zulu application. Port `8001` is loopback-only and does not need another allocation.
+9. Start the server.
+
+The Egg never downloads or builds the Zulu Media plugin. Its startup validation stops with a clear error when `plugins/zulu-media-plugin.jar` is absent. Upload the JAR again after any Pterodactyl reinstall that clears the server volume.
+
+The hidden `GITHUB_USER` and `GITHUB_OAUTH_TOKEN` variables remain optional and are used only to avoid GitHub API rate limits while downloading public dependencies. They are not used to obtain the Zulu Media plugin.
 
 ## Validation
 

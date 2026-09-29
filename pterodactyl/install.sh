@@ -7,7 +7,7 @@ if [ "$(uname -m)" != "x86_64" ]; then
 fi
 
 apt-get update
-apt-get install -y --no-install-recommends ca-certificates curl git jq openjdk-17-jdk-headless python3 python3-yaml tar unzip xz-utils
+apt-get install -y --no-install-recommends ca-certificates curl git jq python3 python3-yaml tar unzip xz-utils
 
 mkdir -p /mnt/server
 cd /mnt/server
@@ -112,26 +112,6 @@ git -C yt-cipher/ejs checkout --detach --force FETCH_HEAD
     ../bin/deno run --allow-read --allow-write ./scripts/patch-ejs.ts
     DENO_DIR=/mnt/server/.deno-cache ../bin/deno cache --no-check server.ts worker.ts
 )
-
-echo "Building the Zulu Media plugin..."
-rm -rf /tmp/zulu-media-plugin
-git "${GIT_AUTH[@]}" init /tmp/zulu-media-plugin
-git -C /tmp/zulu-media-plugin remote add origin "${ZULU_MEDIA_GIT_REPOSITORY}"
-if ! git "${GIT_AUTH[@]}" -C /tmp/zulu-media-plugin fetch --depth 1 origin "${ZULU_MEDIA_GIT_REF}"; then
-    echo "Unable to download the Zulu Media source. If the repository is private, configure the hidden GITHUB_USER and GITHUB_OAUTH_TOKEN Egg variables." >&2
-    exit 1
-fi
-git -C /tmp/zulu-media-plugin checkout --detach --force FETCH_HEAD
-cd /tmp/zulu-media-plugin
-chmod +x gradlew
-./gradlew --no-daemon clean test jar
-PLUGIN_JAR=$(find build/libs -maxdepth 1 -type f -name '*.jar' ! -name '*-sources.jar' ! -name '*-javadoc.jar' -print -quit)
-if [ -z "${PLUGIN_JAR}" ]; then
-    echo "The Zulu Media build did not produce a plugin JAR." >&2
-    exit 1
-fi
-install -m 0644 "${PLUGIN_JAR}" /mnt/server/plugins/zulu-media-plugin.jar
-cd /mnt/server
 
 if [ ! -f application.yml ]; then
     cat > application.yml <<'YAML'
@@ -358,6 +338,9 @@ bin/deno --version
 bin/yt-dlp --version
 bin/ffmpeg -version | head -n 1
 bin/ffprobe -version | head -n 1
-java -version
+
+if [ ! -f plugins/zulu-media-plugin.jar ]; then
+    echo "Upload the Zulu Media JAR as plugins/zulu-media-plugin.jar before starting the server."
+fi
 
 echo "Zulu Lavalink Stack installation completed successfully."
