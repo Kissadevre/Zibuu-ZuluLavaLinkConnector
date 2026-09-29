@@ -7,7 +7,8 @@ if [ "$(uname -m)" != "x86_64" ]; then
 fi
 
 apt-get update
-apt-get install -y --no-install-recommends ca-certificates curl git jq openjdk-17-jdk-headless python3 python3-yaml tar unzip xz-utils
+apt-get install -y --no-install-recommends ca-certificates curl git jq python3 python3-yaml tar unzip xz-utils
+rm -rf /var/lib/apt/lists/*
 
 mkdir -p /mnt/server
 cd /mnt/server
@@ -64,11 +65,19 @@ curl -fL "${FFMPEG_DOWNLOAD_URL}" -o /tmp/ffmpeg-amd64-static.tar.xz
 curl -fsSL "${FFMPEG_CHECKSUM_URL}" -o /tmp/ffmpeg-amd64-static.tar.xz.md5
 EXPECTED_FFMPEG_MD5=$(awk '{ print $1; exit }' /tmp/ffmpeg-amd64-static.tar.xz.md5)
 printf '%s  %s\n' "${EXPECTED_FFMPEG_MD5}" "/tmp/ffmpeg-amd64-static.tar.xz" | md5sum -c -
-rm -rf /tmp/ffmpeg-static
-mkdir -p /tmp/ffmpeg-static
-tar -xJf /tmp/ffmpeg-amd64-static.tar.xz -C /tmp/ffmpeg-static --strip-components=1
-install -m 0755 /tmp/ffmpeg-static/ffmpeg bin/ffmpeg
-install -m 0755 /tmp/ffmpeg-static/ffprobe bin/ffprobe
+FFMPEG_MEMBER=$(tar -tJf /tmp/ffmpeg-amd64-static.tar.xz --wildcards '*/ffmpeg')
+FFPROBE_MEMBER=$(tar -tJf /tmp/ffmpeg-amd64-static.tar.xz --wildcards '*/ffprobe')
+if [ -z "${FFMPEG_MEMBER}" ] || [ -z "${FFPROBE_MEMBER}" ]; then
+    echo "The FFmpeg archive does not contain the expected ffmpeg and ffprobe binaries." >&2
+    exit 1
+fi
+tar -xJf /tmp/ffmpeg-amd64-static.tar.xz \
+    -C bin \
+    --strip-components=1 \
+    "${FFMPEG_MEMBER}" \
+    "${FFPROBE_MEMBER}"
+chmod 0755 bin/ffmpeg bin/ffprobe
+rm -f /tmp/ffmpeg-amd64-static.tar.xz /tmp/ffmpeg-amd64-static.tar.xz.md5
 
 echo "Installing Deno for Linux AMD64..."
 DENO_RELEASE=$(github_release "denoland/deno" "${DENO_VERSION}")
@@ -83,6 +92,7 @@ curl -fsSL "${DENO_SUM_URL}" -o /tmp/deno-amd64.zip.sha256sum
 EXPECTED_DENO_SHA=$(awk '{ print $1; exit }' /tmp/deno-amd64.zip.sha256sum)
 printf '%s  %s\n' "${EXPECTED_DENO_SHA}" "/tmp/deno-amd64.zip" | sha256sum -c -
 unzip -jo /tmp/deno-amd64.zip deno -d bin
+rm -f /tmp/deno-amd64.zip /tmp/deno-amd64.zip.sha256sum
 
 echo "Installing yt-cipher..."
 if [ -d yt-cipher/.git ]; then
@@ -112,26 +122,6 @@ git -C yt-cipher/ejs checkout --detach --force FETCH_HEAD
     ../bin/deno run --allow-read --allow-write ./scripts/patch-ejs.ts
     DENO_DIR=/mnt/server/.deno-cache ../bin/deno cache --no-check server.ts worker.ts
 )
-
-echo "Building the Zulu Media plugin..."
-rm -rf /tmp/zulu-media-plugin
-git "${GIT_AUTH[@]}" init /tmp/zulu-media-plugin
-git -C /tmp/zulu-media-plugin remote add origin "${ZULU_MEDIA_GIT_REPOSITORY}"
-if ! git "${GIT_AUTH[@]}" -C /tmp/zulu-media-plugin fetch --depth 1 origin "${ZULU_MEDIA_GIT_REF}"; then
-    echo "Unable to download the Zulu Media source. If the repository is private, configure the hidden GITHUB_USER and GITHUB_OAUTH_TOKEN Egg variables." >&2
-    exit 1
-fi
-git -C /tmp/zulu-media-plugin checkout --detach --force FETCH_HEAD
-cd /tmp/zulu-media-plugin
-chmod +x gradlew
-./gradlew --no-daemon clean test jar
-PLUGIN_JAR=$(find build/libs -maxdepth 1 -type f -name '*.jar' ! -name '*-sources.jar' ! -name '*-javadoc.jar' -print -quit)
-if [ -z "${PLUGIN_JAR}" ]; then
-    echo "The Zulu Media build did not produce a plugin JAR." >&2
-    exit 1
-fi
-install -m 0644 "${PLUGIN_JAR}" /mnt/server/plugins/zulu-media-plugin.jar
-cd /mnt/server
 
 if [ ! -f application.yml ]; then
     cat > application.yml <<'YAML'
@@ -358,6 +348,9 @@ bin/deno --version
 bin/yt-dlp --version
 bin/ffmpeg -version | head -n 1
 bin/ffprobe -version | head -n 1
-java -version
+
+if [ ! -f plugins/zulu-media-plugin.jar ]; then
+    echo "Upload the Zulu Media JAR as plugins/zulu-media-plugin.jar before starting the server."
+fi
 
 echo "Zulu Lavalink Stack installation completed successfully."
