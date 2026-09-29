@@ -1,0 +1,59 @@
+server:
+  port: 2333
+  address: 0.0.0.0
+
+lavalink:
+  server:
+    password: ${LAVALINK_PASSWORD}
+    sources:
+      youtube: false
+  plugins:
+    - dependency: "dev.lavalink.youtube:youtube-plugin:1.18.2"
+      snapshot: false
+    # After publishing this repository, use its release coordinate and repository here.
+    # - dependency: "dev.zulu:zulu-media-plugin:0.1.0"
+    #   repository: "https://your-maven-repository/releases"
+
+plugins:
+  youtube:
+    enabled: true
+    allowSearch: true
+    allowDirectVideoIds: true
+    allowDirectPlaylistIds: false
+    clients:
+      - MUSIC
+      - ANDROID_VR
+      - WEB
+      - WEBEMBEDDED
+    # remoteCipher:
+    #   url: http://127.0.0.1:8001
+    #   password: ${YT_CIPHER_TOKEN}
+    #   userAgent: zulu-lavalink
+
+  zulu-media:
+    enabled: true
+    api-token: ${ZULU_MEDIA_API_TOKEN}
+    yt-dlp-path: ./bin/yt-dlp
+    ffmpeg-path: ./bin/ffmpeg
+    storage-path: ./data/zulu-media
+    default-search-limit: 5
+    max-search-limit: 10
+    max-concurrent-searches: 4
+    max-concurrent-downloads: 2
+    max-queued-downloads: 20
+    max-duration-minutes: 20
+    max-file-mb: 48
+    audio-format: m4a
+    audio-bitrate: 128K
+    search-timeout: 30s
+    download-timeout: 10m
+    search-result-ttl: 10m
+    job-ttl: 1h
+    cache-ttl: 24h
+    cache-max-mb: 2048
+    cleanup-interval: 10m
+
+logging:
+  level:
+    root: INFO
+    dev.zulu.media: INFO

@@ -1,0 +1,10 @@
+build/
+.gradle/
+.idea/
+*.iml
+/application.yml
+logs/
+data/
+*.log
+__pycache__/
+*.pyc
