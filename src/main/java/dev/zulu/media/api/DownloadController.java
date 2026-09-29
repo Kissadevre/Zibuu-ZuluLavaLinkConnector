@@ -3,13 +3,14 @@ package dev.zulu.media.api;
 import dev.zulu.media.download.DownloadJobSnapshot;
 import dev.zulu.media.download.DownloadService;
 import dev.zulu.media.storage.StoredMedia;
+import jakarta.servlet.http.HttpServletResponse;
+import java.io.IOException;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.util.UUID;
-import org.springframework.core.io.FileSystemResource;
 import org.springframework.http.ContentDisposition;
 import org.springframework.http.HttpHeaders;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -44,21 +45,23 @@ public final class DownloadController {
     }
 
     @GetMapping("/{jobId}/file")
-    public ResponseEntity<FileSystemResource> file(@PathVariable("jobId") UUID jobId) {
-        StoredMedia media = downloadService.getFile(jobId);
-        MediaType contentType = media.details().format().equalsIgnoreCase("mp3")
-            ? MediaType.parseMediaType("audio/mpeg")
-            : MediaType.parseMediaType("audio/mp4");
+    public void file(@PathVariable("jobId") UUID jobId, HttpServletResponse response) throws IOException {
+        writeFileResponse(downloadService.getFile(jobId), response);
+    }
+
+    static void writeFileResponse(StoredMedia media, HttpServletResponse response) throws IOException {
+        String contentType = media.details().format().equalsIgnoreCase("mp3")
+            ? "audio/mpeg"
+            : "audio/mp4";
         String filename = safeFilename(media.details().title()) + "." + media.details().format();
 
-        return ResponseEntity.ok()
-            .contentType(contentType)
-            .contentLength(media.details().sizeBytes())
-            .header(
-                HttpHeaders.CONTENT_DISPOSITION,
-                ContentDisposition.attachment().filename(filename, StandardCharsets.UTF_8).build().toString()
-            )
-            .body(new FileSystemResource(media.path()));
+        response.setContentType(contentType);
+        response.setContentLengthLong(media.details().sizeBytes());
+        response.setHeader(
+            HttpHeaders.CONTENT_DISPOSITION,
+            ContentDisposition.attachment().filename(filename, StandardCharsets.UTF_8).build().toString()
+        );
+        Files.copy(media.path(), response.getOutputStream());
     }
 
     @DeleteMapping("/{jobId}")
@@ -67,7 +70,7 @@ public final class DownloadController {
         return ResponseEntity.noContent().build();
     }
 
-    private String safeFilename(String title) {
+    private static String safeFilename(String title) {
         String safe = title == null ? "audio" : title
             .replaceAll("[\\p{Cntrl}\\\\/:*?\"<>|]", "_")
             .strip();

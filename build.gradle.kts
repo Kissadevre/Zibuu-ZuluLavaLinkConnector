@@ -4,7 +4,7 @@ plugins {
 }
 
 group = "dev.zulu"
-version = "0.1.0"
+version = "0.1.1"
 
 lavalinkPlugin {
     name = "zulu-media-plugin"
@@ -35,4 +35,5 @@ tasks {
 dependencies {
     testImplementation(platform("org.junit:junit-bom:${libs.versions.junit.get()}"))
     testImplementation("org.junit.jupiter:junit-jupiter")
+    testImplementation("org.springframework:spring-test:6.1.8")
 }
