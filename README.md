@@ -167,6 +167,8 @@ The endpoint returns `200` when all dependencies are available and `503` with co
 
 ## Client flow
 
+For a complete client implementation contract—including separate Telegram and Discord flows, error handling, security, persistence, and acceptance tests—see [the AI integration guide](docs/AI_INTEGRATION_GUIDE.md).
+
 1. Zulu searches and displays up to five results.
 2. The user selects a result.
 3. Discord passes the selected canonical URL to its existing Lavalink queue.
