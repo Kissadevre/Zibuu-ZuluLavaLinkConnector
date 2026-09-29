@@ -21,6 +21,8 @@ Portable runtime dependencies persist in the server volume instead of relying on
 └── start-zulu-stack.sh
 ```
 
+The installer extracts only the `ffmpeg` and `ffprobe` executables from the static FFmpeg distribution. The bundled VMAF models and documentation are intentionally omitted to keep installation disk usage low.
+
 ## Import and install
 
 1. Import `egg-zulu-lavalink-stack.json` into the desired Pterodactyl nest.
@@ -53,7 +55,7 @@ curl \
   'http://your-server:2333/plugins/zulu-media/v1/health'
 ```
 
-The health response should report `yt-dlp`, FFmpeg, storage, and queue status. The installation also checks the versions of Java, Deno, yt-dlp, FFmpeg, and FFprobe before it finishes.
+The health response should report `yt-dlp`, FFmpeg, storage, and queue status. The installation also checks the versions of Deno, yt-dlp, FFmpeg, and FFprobe before it finishes; the Java 21 runtime is supplied by the server image.
 
 ## Maintaining the generated Egg
 

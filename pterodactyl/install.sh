@@ -8,6 +8,7 @@ fi
 
 apt-get update
 apt-get install -y --no-install-recommends ca-certificates curl git jq python3 python3-yaml tar unzip xz-utils
+rm -rf /var/lib/apt/lists/*
 
 mkdir -p /mnt/server
 cd /mnt/server
@@ -64,11 +65,19 @@ curl -fL "${FFMPEG_DOWNLOAD_URL}" -o /tmp/ffmpeg-amd64-static.tar.xz
 curl -fsSL "${FFMPEG_CHECKSUM_URL}" -o /tmp/ffmpeg-amd64-static.tar.xz.md5
 EXPECTED_FFMPEG_MD5=$(awk '{ print $1; exit }' /tmp/ffmpeg-amd64-static.tar.xz.md5)
 printf '%s  %s\n' "${EXPECTED_FFMPEG_MD5}" "/tmp/ffmpeg-amd64-static.tar.xz" | md5sum -c -
-rm -rf /tmp/ffmpeg-static
-mkdir -p /tmp/ffmpeg-static
-tar -xJf /tmp/ffmpeg-amd64-static.tar.xz -C /tmp/ffmpeg-static --strip-components=1
-install -m 0755 /tmp/ffmpeg-static/ffmpeg bin/ffmpeg
-install -m 0755 /tmp/ffmpeg-static/ffprobe bin/ffprobe
+FFMPEG_MEMBER=$(tar -tJf /tmp/ffmpeg-amd64-static.tar.xz --wildcards '*/ffmpeg')
+FFPROBE_MEMBER=$(tar -tJf /tmp/ffmpeg-amd64-static.tar.xz --wildcards '*/ffprobe')
+if [ -z "${FFMPEG_MEMBER}" ] || [ -z "${FFPROBE_MEMBER}" ]; then
+    echo "The FFmpeg archive does not contain the expected ffmpeg and ffprobe binaries." >&2
+    exit 1
+fi
+tar -xJf /tmp/ffmpeg-amd64-static.tar.xz \
+    -C bin \
+    --strip-components=1 \
+    "${FFMPEG_MEMBER}" \
+    "${FFPROBE_MEMBER}"
+chmod 0755 bin/ffmpeg bin/ffprobe
+rm -f /tmp/ffmpeg-amd64-static.tar.xz /tmp/ffmpeg-amd64-static.tar.xz.md5
 
 echo "Installing Deno for Linux AMD64..."
 DENO_RELEASE=$(github_release "denoland/deno" "${DENO_VERSION}")
@@ -83,6 +92,7 @@ curl -fsSL "${DENO_SUM_URL}" -o /tmp/deno-amd64.zip.sha256sum
 EXPECTED_DENO_SHA=$(awk '{ print $1; exit }' /tmp/deno-amd64.zip.sha256sum)
 printf '%s  %s\n' "${EXPECTED_DENO_SHA}" "/tmp/deno-amd64.zip" | sha256sum -c -
 unzip -jo /tmp/deno-amd64.zip deno -d bin
+rm -f /tmp/deno-amd64.zip /tmp/deno-amd64.zip.sha256sum
 
 echo "Installing yt-cipher..."
 if [ -d yt-cipher/.git ]; then
